@@ -55,7 +55,7 @@ systemctl start satisfactory
 cat << 'EOF' > /home/ubuntu/auto-shutdown.sh
 #!/bin/sh
 
-shutdownIdleMinutes=30
+shutdownIdleMinutes=25
 idleCheckFrequencySeconds=1
 
 isIdle=0
@@ -103,5 +103,10 @@ EOF
 systemctl enable auto-shutdown
 systemctl start auto-shutdown
 
+# load files from s3
+su - ubuntu -c "/usr/local/bin/aws s3 sync s3://$S3_SAVE_BUCKET/server /home/ubuntu/.config/Epic/FactoryGame/Saved/SaveGames/server"
+su - ubuntu -c "/usr/local/bin/aws s3 sync s3://$S3_SAVE_BUCKET/blueprints /home/ubuntu/.config/Epic/FactoryGame/Saved/SaveGames/blueprints"
+
 # automated backups to s3 every 5 minutes
-su - ubuntu -c "crontab -u ubuntu -l | { cat; echo \"*/5 * * * * /usr/local/bin/aws s3 sync /home/ubuntu/.config/Epic/FactoryGame/Saved/SaveGames/server s3://$S3_SAVE_BUCKET\"; } | crontab -"
+su - ubuntu -c "crontab -u ubuntu -l | { cat; echo \"*/5 * * * * /usr/local/bin/aws s3 sync /home/ubuntu/.config/Epic/FactoryGame/Saved/SaveGames/server s3://$S3_SAVE_BUCKET/server\"; } | crontab -"
+su - ubuntu -c "crontab -u ubuntu -l | { cat; echo \"*/5 * * * * /usr/local/bin/aws s3 sync /home/ubuntu/.config/Epic/FactoryGame/Saved/SaveGames/blueprints s3://$S3_SAVE_BUCKET/blueprints\"; } | crontab -"
