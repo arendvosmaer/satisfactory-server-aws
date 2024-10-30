@@ -1,4 +1,4 @@
-import { Duration, Stack, StackProps } from "aws-cdk-lib";
+import { aws_ssm, Duration, Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Config } from "./config";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
@@ -185,6 +185,12 @@ export class SatisFactoryStack extends Stack {
     //////////////////////////////
 
     if (Config.restartApi && Config.restartApi === true) {
+
+      const discordToken = aws_ssm.StringParameter.fromSecureStringParameterAttributes(this,
+        "discord-token", {
+        parameterName: "discord-token"
+      });
+
       const startServerLambda = new lambda_nodejs.NodejsFunction(
         this,
         `${Config.prefix}StartServerLambda`,
@@ -194,9 +200,13 @@ export class SatisFactoryStack extends Stack {
           timeout: Duration.seconds(10),
           environment: {
             INSTANCE_ID: server.instanceId,
+            DISCORD_SERVER_ID: Config.discordServerId,
+            DISCORD_TOKEN: discordToken.stringValue
           },
         }
       );
+
+      discordToken.grantRead(startServerLambda);
 
       startServerLambda.addToRolePolicy(
         new iam.PolicyStatement({
